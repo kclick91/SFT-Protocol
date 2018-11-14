@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./SecurityToken.sol";
 import "./MultiSig.sol";
@@ -11,8 +11,8 @@ contract Custodian is MultiSigMultiOwner {
 	mapping (address => bool) public addresses;
 
 	constructor(
-		string _name,
-		address[] _owners,
+		string memory _name,
+		address[] memory _owners,
 		uint64 _threshold
 	)
 		MultiSigMultiOwner(_owners, _threshold)

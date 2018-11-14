@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 
 import "../../open-zeppelin/SafeMath.sol";
@@ -55,7 +55,7 @@ contract DEXModule is STModuleBase {
 
 	function _dexLock(bytes32 _id, address _owner, uint256 _value) internal {
 		ExchangeBalance storage e = balances[_owner];
-		require (token.balanceOf(msg.sender) > e.total.add(_value));
+		require(token.balanceOf(msg.sender) > e.total.add(_value));
 		e.total = e.total.add(_value);
 		e.exchange[_id] = e.exchange[_id].add(_value);
 	}

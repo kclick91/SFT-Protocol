@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "../../open-zeppelin/SafeMath.sol";
 import "../ModuleBase.sol";
@@ -8,10 +8,10 @@ contract CheckpointModule is STModuleBase {
 
 	using SafeMath for uint256;
 
-	uint256 time;
-	uint256 totalSupply;
-	mapping (address => uint256) balance;
-	mapping (address => bool) zeroBalance;
+	uint256 private time;
+	uint256 private totalSupply;
+	mapping (address => uint256) private balance;
+	mapping (address => bool) private zeroBalance;
 
 	constructor(
 		address _token,
@@ -21,7 +21,7 @@ contract CheckpointModule is STModuleBase {
 		STModuleBase(_token, _issuer)
 		public
 	{
-		require (_time >= now);
+		require(_time >= now);
 		totalSupply = token.totalSupply();
 		time = _time;
 	}
@@ -33,10 +33,10 @@ contract CheckpointModule is STModuleBase {
 	}
 
 	function transferTokens(
-		address[2] _addr,
-		bytes32[2],
-		uint8[2],
-		uint16[2],
+		address[2] calldata _addr,
+		bytes32[2] calldata,
+		uint8[2] calldata,
+		uint16[2] calldata,
 		uint256 _value
 	)
 		external

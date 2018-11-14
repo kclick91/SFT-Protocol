@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "../../open-zeppelin/SafeMath.sol";
 import "../ModuleBase.sol";
@@ -9,7 +9,7 @@ contract CrowdsaleModule is STModuleBase {
 	using SafeMath for uint256;
 
 	string public name = "Crowdsale";
-	address receiver;
+	address payable receiver;
 
 	uint64 public crowdsaleStart;
 	uint64 public crowdsaleFinish;
@@ -29,23 +29,23 @@ contract CrowdsaleModule is STModuleBase {
 	constructor (
 		address _token,
 		address _issuer,
-		address _receiver,
+		address payable _receiver,
 		uint64 _start,
 		uint64 _finish,
 		uint256 _ethRate,
 		uint256 _tokenRate,
 		uint256 _fiatMax,
 		uint256 _tokensMax,
-		uint256[] _bonusPct,
-		uint64[] _bonusTimes
+		uint256[] memory _bonusPct,
+		uint64[] memory _bonusTimes
 	)
 		STModuleBase(_token, _issuer)
 		public
 	{
-		require (_fiatMax > 0 || _tokensMax > 0);
-		require (_ethRate > 0 && _tokenRate > 0);
-		require (_finish > now);
-		require (_bonusPct.length == _bonusTimes.length);
+		require(_fiatMax > 0 || _tokensMax > 0);
+		require(_ethRate > 0 && _tokenRate > 0);
+		require(_finish > now);
+		require(_bonusPct.length == _bonusTimes.length);
 		if (_bonusTimes.length > 0) {
 			require(_bonusTimes[0] <= _start);
 			for (uint256 i = 1; i < _bonusPct.length; i++) {
@@ -63,12 +63,12 @@ contract CrowdsaleModule is STModuleBase {
 		bonusPct = _bonusPct;
 	}
 
-	function () public payable {
-		require (now >= crowdsaleStart);
-		require (now < crowdsaleFinish);
-		require (crowdsaleCompleted == 0);
-		require (msg.value > 0);
-		require (issuer.getId(msg.sender) != ownerID);
+	function () external payable {
+		require(now >= crowdsaleStart);
+		require(now < crowdsaleFinish);
+		require(crowdsaleCompleted == 0);
+		require(msg.value > 0);
+		require(issuer.getId(msg.sender) != ownerID);
 		uint256 _fiat = msg.value.mul(ethFiatRate).div(1 ether);
 		_fiat = _fiat.sub(_checkExcess(fiat, fiatMax, _fiat));
 		uint256 _tokens = _fiat.div(tokenFiatRate);
@@ -110,8 +110,8 @@ contract CrowdsaleModule is STModuleBase {
 		external
 		onlyIssuer
 	{
-		require (tokens.add(_tokens) <= tokensMax);
-		require (fiat.add(_fiat) <= fiatMax);
+		require(tokens.add(_tokens) <= tokensMax);
+		require(fiat.add(_fiat) <= fiatMax);
 		token.transferFrom(address(issuer), _to, _tokens);
 		tokens = tokens.add(_tokens);
 		fiat = fiat.add(_fiat);
@@ -140,18 +140,18 @@ contract CrowdsaleModule is STModuleBase {
 	}
 
 	function checkTransfer(
-		address[2],
+		address[2] calldata,
 		bytes32 _authID,
-		bytes32[2],
-		uint8[2],
-		uint16[2],
+		bytes32[2] calldata,
+		uint8[2] calldata,
+		uint16[2] calldata,
 		uint256
 	)
 		external
 		view
 		returns (bool)
 	{
-		require (_authID == ownerID);
+		require(_authID == ownerID);
 		return true;
 	}
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "../ModuleBase.sol";
 
@@ -13,19 +13,19 @@ contract CountryLockModule is STModuleBase {
 	}
 
 	function checkTransfer(
-		address[2],
+		address[2] calldata,
 		bytes32,
-		bytes32[2],
-		uint8[2],
-		uint16[2] _country,
+		bytes32[2] calldata,
+		uint8[2] calldata,
+		uint16[2] calldata _country,
 		uint256
 	)
 		external
 		view
 		returns (bool)
 	{
-		require (countryLock[_country[0]] < now);
-		require (countryLock[_country[1]] < now);
+		require(countryLock[_country[0]] < now);
+		require(countryLock[_country[1]] < now);
 	}
 
 	function getBindings() external pure returns (bool, bool, bool) {

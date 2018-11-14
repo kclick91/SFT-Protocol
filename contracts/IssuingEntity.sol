@@ -1,10 +1,11 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./open-zeppelin/SafeMath.sol";
 import "./SecurityToken.sol";
 import "./STBase.sol";
 import "./interfaces/Custodian.sol";
 import "./MultiSig.sol";
+
 
 /// @title Issuing Entity
 contract IssuingEntity is STBase, MultiSigMultiOwner {
@@ -42,12 +43,12 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		bool restricted;
 	}
 
-	bool locked;
-	Registrar[] regArray;
+	bool private locked;
+	Registrar[] private regArray;
 	uint64[8] public counts;
 	uint64[8] public limits;
-	mapping (uint16 => Country) countries;
-	mapping (bytes32 => Account) accounts;
+	mapping (uint16 => Country) private countries;
+	mapping (bytes32 => Account) private accounts;
 	mapping (address => Token) tokens;
 	mapping (string => bytes32) documentHashes;
 
@@ -75,19 +76,19 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	event GloballyRestricted(bool restricted);
 	
 	modifier onlyToken() {
-		require (tokens[msg.sender].set && !tokens[msg.sender].restricted);
+		require(tokens[msg.sender].set && !tokens[msg.sender].restricted);
 		_;
 	}
 
 	/// @notice Issuing entity constructor
-	constructor(
-		address[] _owners,
+	constructor (
+		address[] memory _owners,
 		uint64 _threshold
 	)
 		MultiSigMultiOwner(_owners, _threshold)
 		public 
 	{
-		regArray.push(Registrar(KYCRegistrar(0),false));
+		regArray.push(Registrar(KYCRegistrar(0), false));
 		emit NewIssuingEntity(msg.sender, address(this), ownerID);
 	}
 
@@ -107,7 +108,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	)
 		external
 		view
-		returns (uint64[8] _count, uint64[8] _limit)
+		returns (uint64[8] memory _count, uint64[8] memory _limit)
 	{
 		return (
 			countries[_country].counts,
@@ -125,7 +126,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		uint16 _country,
 		bool _allowed,
 		uint8 _minRating,
-		uint64[8] _limits
+		uint64[8] calldata _limits
 	)
 		external
 		returns (bool)
@@ -144,18 +145,18 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	/// @param _minRating Array of minimum investor ratings necessary for each country
 	/// @param _limit Array of maximum mumber of investors allowed from this country
 	function setCountries(
-		uint16[] _country,
-		uint8[] _minRating,
-		uint64[] _limit
+		uint16[] calldata _country,
+		uint8[] calldata _minRating,
+		uint64[] calldata _limit
 	)
 		external
 		returns (bool)
 	{
 		if (!_checkMultiSig()) return false;
-		require (_country.length == _minRating.length);
-		require (_country.length == _limit.length);
+		require(_country.length == _minRating.length);
+		require(_country.length == _limit.length);
 		for (uint256 i = 0; i < _country.length; i++) {
-			require (_minRating[i] != 0);
+			require(_minRating[i] != 0);
 			Country storage c = countries[_country[i]];
 			c.allowed = true;
 			c.minRating = _minRating[i];
@@ -170,7 +171,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	/// regardless of rating
 	/// @param _limits Array of limits per rating
 	function setInvestorLimits(
-		uint64[8] _limits
+		uint64[8] calldata _limits
 	)
 		external
 		returns (bool)
@@ -198,9 +199,9 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		external
 		returns (
 			bytes32 _idAuth,
-			bytes32[2] _id,
-			uint8[2] _rating,
-			uint16[2] _country
+			bytes32[2] memory _id,
+			uint8[2] memory _rating,
+			uint16[2] memory _country
 		)
 	{
 		_idAuth = _getId(_auth);
@@ -237,9 +238,9 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		external
 		view
 		returns (
-			bytes32[2] _id,
-			uint8[2] _rating,
-			uint16[2] _country
+			bytes32[2] memory _id,
+			uint8[2] memory _rating,
+			uint16[2] memory _country
 		)
 	{	
 		uint8[2] memory _key;
@@ -265,10 +266,10 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	function _checkTransfer(
 		address _token,
 		bytes32 _idAuth,
-		bytes32[2] _id,
-		bool[2] _allowed,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] memory _id,
+		bool[2] memory _allowed,
+		uint8[2] memory _rating,
+		uint16[2] memory _country,
 		uint256 _value
 	)
 		internal
@@ -289,12 +290,12 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 			/* TODO Exchange to exchange transfers are not permitted */
 			if (_rating[1] != 0) {
 				Country storage c = countries[_country[1]];
-				require (c.allowed, "Reciever blocked: Country");
+				require(c.allowed, "Reciever blocked: Country");
 				/*  
 					If the receiving investor currently has a 0 balance,
 					we must make sure a slot is available for allocation
 				*/
-				require (_rating[1] >= c.minRating, "Receiver blocked: Rating");
+				require(_rating[1] >= c.minRating, "Receiver blocked: Rating");
 				if (accounts[_id[1]].balance == 0) {
 					/*
 						If the sender is an investor and still retains a balance,
@@ -305,7 +306,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 						accounts[_id[1]].balance > _value
 					);
 					if (_check) {
-						require (
+						require(
 							limits[0] == 0 ||
 							counts[0] < limits[0],
 							"Investor Limit"
@@ -317,7 +318,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 						a slot is available in the overall country limit
 					*/
 					if (_check || _country[0] != _country[1]) {
-						require (
+						require(
 							c.limits[0] == 0 ||
 							c.counts[0] < c.limits[0],
 							"Investor Limit"
@@ -332,7 +333,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 						count
 					*/
 					if (_check) {
-						require (
+						require(
 							limits[_rating[1]] == 0 ||
 							counts[_rating[1]] < limits[_rating[1]],
 							"Investor Limit"
@@ -344,7 +345,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 						and rating for the receiver
 					*/
 					if (_check || _country[0] != _country[1]) {
-						require (
+						require(
 							c.limits[_rating[1]] == 0 ||
 							c.counts[_rating[1]] < c.limits[_rating[1]],
 							"Investor Limit"
@@ -354,7 +355,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 			}
 		}
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].checkTransfer) {
+			if (address(modules[i].module) != address(0) && modules[i].checkTransfer) {
 				require(
 					IIssuerModule(modules[i].module).checkTransfer(
 						_token,
@@ -395,7 +396,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		bytes32 _id = idMap[_addr].id;
 		if (_id == 0) {
 			for (uint256 i = 1; i < regArray.length; i++) {
-				if (address(regArray[i].registrar) > 0) {
+				if (address(regArray[i].registrar) > address(0)) {
 					_id = regArray[i].registrar.getId(_addr);
 					if (_id != 0) {
 						return (_id, uint8(i));
@@ -404,13 +405,13 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 			}
 			revert();
 		}
-		if (accounts[_id].registrar != 0) {
+		if (accounts[_id].registrar != address(0)) {
 			return (_id, 0);
 		}
-		if (address(regArray[accounts[_id].regKey].registrar) == 0)  {
-			for (i = 1; i < regArray.length; i++) {
+		if (address(regArray[accounts[_id].regKey].registrar) == address(0)) {
+			for (uint256 i = 1; i < regArray.length; i++) {
 				if (
-					address(regArray[i].registrar) != 0 && 
+					address(regArray[i].registrar) != address(0) && 
 					_id == regArray[i].registrar.getId(_addr)
 				) {
 					return (_id, uint8(i));
@@ -422,15 +423,15 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	}
 
 	function _getInvestors(
-		address[2] _addr,
-		uint8[2] _key
+		address[2] memory _addr,
+		uint8[2] memory _key
 	)
 		internal
 		view
 		returns (
-			bool[2] _allowed,
-			uint8[2] _rating,
-			uint16[2] _country
+			bool[2] memory _allowed,
+			uint8[2] memory _rating,
+			uint16[2] memory _country
 		)
 	{
 		bytes32[2] memory _id;
@@ -481,9 +482,9 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	/// @param _value Number of tokens being transferred
 	/// @return boolean
 	function transferTokens(
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] calldata _id,
+		uint8[2] calldata _rating,
+		uint16[2] calldata _country,
 		uint256 _value
 	)
 		external
@@ -496,9 +497,9 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		_balance = uint256(accounts[_id[1]].balance).add(_value);
 		_setBalance(_id[1], _rating[1], _country[1], _balance);
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].transferTokens) {
+			if (address(modules[i].module) != address(0) && modules[i].transferTokens) {
 				IIssuerModule m = IIssuerModule(modules[i].module);
-				require (
+				require(
 					m.transferTokens(msg.sender, _id, _rating, _country, _value)
 				);
 			}
@@ -540,16 +541,17 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 			) = regArray[_key].registrar.getInvestor(_owner);
 		}
 		uint256 _oldTotal = accounts[_id].balance;
+		uint256 _newTotal;
 		if (_new > _old) {
-			uint256 _newTotal = uint256(accounts[_id].balance).add(_new.sub(_old));
+			_newTotal = uint256(accounts[_id].balance).add(_new.sub(_old));
 		} else {
 			_newTotal = uint256(accounts[_id].balance).sub(_old.sub(_new));
 		}
 		_setBalance(_id, _rating, _country, _newTotal);
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].balanceChanged) {
+			if (address(modules[i].module) != address(0) && modules[i].balanceChanged) {
 				IIssuerModule m = IIssuerModule(modules[i].module);
-				require (m.balanceChanged(
+				require(m.balanceChanged(
 					msg.sender,
 					_id,
 					_rating,
@@ -608,14 +610,14 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	/// @param _documentId Document ID being hashed
 	/// @param _hash Hash of the document
 	function setDocumentHash(
-		string _documentId,
+		string calldata _documentId,
 		bytes32 _hash
 	)
 		external
 		returns (bool)
 	{
 		if (!_checkMultiSig()) return false;
-		require (documentHashes[_documentId] == 0);
+		require(documentHashes[_documentId] == 0);
 		documentHashes[_documentId] = _hash;
 		emit NewDocumentHash(_documentId, _hash);
 		return true;
@@ -624,7 +626,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	/// @notice Fetch document hash
 	/// @param _documentId Document ID to fetch
 	/// @return string
-	function getDocumentHash(string _documentId) external view returns (bytes32) {
+	function getDocumentHash(string calldata _documentId) external view returns (bytes32) {
 		return documentHashes[_documentId];
 	}
 
@@ -651,7 +653,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	}
 
 	function getRegistrar(bytes32 _id) external view returns (address) {
-		return regArray[accounts[_id].regKey].registrar;
+		return address(regArray[accounts[_id].regKey].registrar);
 	}
 
 	function addCustodian(address _addr) external returns (bool) {
@@ -668,9 +670,9 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 	function addToken(address _token) external returns (bool) {
 		if (!_checkMultiSig()) return false;
 		SecurityToken token = SecurityToken(_token);
-		require (!tokens[_token].set);
-		require (token.ownerID() == ownerID);
-		require (token.circulatingSupply() == 0);
+		require(!tokens[_token].set);
+		require(token.ownerID() == ownerID);
+		require(token.circulatingSupply() == 0);
 		tokens[_token].set = true;
 		uint256 _balance = uint256(accounts[ownerID].balance).add(token.treasurySupply());
 		accounts[ownerID].balance = uint240(_balance);
@@ -698,7 +700,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		returns (bool)
 	{
 		if (!_checkMultiSig()) return false;
-		require (tokens[_token].set);
+		require(tokens[_token].set);
 		tokens[_token].restricted = _restricted;
 		emit TokenRestricted(_token, _restricted);
 		return true;
@@ -722,7 +724,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		if (_target == address(this)) {
 			_attachModule(_module);
 		} else {
-			require (tokens[_target].set);
+			require(tokens[_target].set);
 			SecurityToken(_target).attachModule(_module);
 		}
 		return true;
@@ -741,7 +743,7 @@ contract IssuingEntity is STBase, MultiSigMultiOwner {
 		if (_target == address(this)) {
 			_detachModule(_module);
 		} else {
-			require (tokens[_target].set);
+			require(tokens[_target].set);
 			SecurityToken(_target).detachModule(_module);
 		}
 		return true;

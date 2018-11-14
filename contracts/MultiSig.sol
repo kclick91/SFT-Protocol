@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./open-zeppelin/SafeMath.sol";
 
@@ -76,14 +76,14 @@ contract MultiSigMultiOwner {
 	}
 
 	modifier onlySelfAuthority(bytes32 _id) {
-		require (_id != 0);
+		require(_id != 0);
 		if (idMap[msg.sender].id != ownerID) {
 			require(idMap[msg.sender].id == _id);
 		}
 		_;
 	}
 
-	constructor(address[] _owners, uint64 _threshold) public {
+	constructor(address[] memory _owners, uint64 _threshold) public {
 		require(_owners.length >= _threshold);
 		require(_owners.length > 0);
 		ownerID = keccak256(abi.encodePacked(address(this)));
@@ -179,8 +179,8 @@ contract MultiSigMultiOwner {
 
 	function addAuthority(
 		bytes32 _id,
-		address[] _owners,
-		bytes4[] _signatures,
+		address[] calldata _owners,
+		bytes4[] calldata _signatures,
 		uint64 _approvedUntil,
 		uint64 _threshold
 	)
@@ -191,8 +191,8 @@ contract MultiSigMultiOwner {
 		if (!_checkMultiSig()) {
 			return false;
 		}
-		require (_owners.length >= _threshold);
-		require (_owners.length > 0);
+		require(_owners.length >= _threshold);
+		require(_owners.length > 0);
 		Authority storage a = authorityData[_id];
 		require(a.addressCount == 0);
 		require(_id != 0);
@@ -200,7 +200,7 @@ contract MultiSigMultiOwner {
 			require(idMap[_owners[i]].id == 0);
 			idMap[_owners[i]].id = _id;
 		}
-		for (i = 0; i < _signatures.length; i++) {
+		for (uint256 i = 0; i < _signatures.length; i++) {
 			a.signatures[_signatures[i]] = true;
 		}
 		a.approvedUntil = _approvedUntil;
@@ -231,7 +231,7 @@ contract MultiSigMultiOwner {
 
 	function setPermittedSignatures(
 		bytes32 _id,
-		bytes4[] _signatures,
+		bytes4[] calldata _signatures,
 		bool _allowed
 	)
 		external
@@ -274,7 +274,7 @@ contract MultiSigMultiOwner {
 
 	function addAuthorityAddresses(
 		bytes32 _id,
-		address[] _owners
+		address[] calldata _owners
 	)
 		external
 		onlySelfAuthority(_id)
@@ -296,7 +296,7 @@ contract MultiSigMultiOwner {
 
 	function removeAuthorityAddresses(
 		bytes32 _id,
-		address[] _owners
+		address[] calldata _owners
 	)
 		external
 		onlySelfAuthority(_id)
@@ -312,8 +312,8 @@ contract MultiSigMultiOwner {
 			idMap[_owners[i]].restricted = true;
 		}
 		a.addressCount = a.addressCount.sub(uint64(_owners.length));
-		require (a.addressCount >= a.multiSigThreshold);
-		require (a.addressCount > 0);
+		require(a.addressCount >= a.multiSigThreshold);
+		require(a.addressCount > 0);
 		emit RemovedAuthorityAddresses(_id, _owners, a.addressCount);
 		return true;
 	}

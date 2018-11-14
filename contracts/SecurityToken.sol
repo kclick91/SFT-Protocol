@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./open-zeppelin/SafeMath.sol";
 import "./IssuingEntity.sol";
@@ -42,8 +42,8 @@ contract SecurityToken is STBase {
 	/// @param _totalSupply Total supply of the token
 	constructor(
 		address _issuer,
-		string _name,
-		string _symbol,
+		string memory _name,
+		string memory _symbol,
 		uint256 _totalSupply
 	)
 		public
@@ -55,7 +55,7 @@ contract SecurityToken is STBase {
 		balances[_issuer] = _totalSupply;
 		totalSupply = _totalSupply;
 		emit NewSecurityToken(msg.sender, address(this), ownerID);
-		emit Transfer(0, _issuer, _totalSupply);
+		emit Transfer(address(0), _issuer, _totalSupply);
 	}
 
 	/// @notice Fetch circulating supply
@@ -106,7 +106,7 @@ contract SecurityToken is STBase {
 		view
 		returns (bool)
 	{
-		require (_value > 0, "Cannot send 0 tokens");
+		require(_value > 0, "Cannot send 0 tokens");
 		(
 			bytes32[2] memory _id,
 			uint8[2] memory _rating,
@@ -133,13 +133,13 @@ contract SecurityToken is STBase {
 		internal
 		returns (
 			bytes32 _authId,
-			bytes32[2] _id,
-			address[2] _addr,
-			uint8[2] _rating,
-			uint16[2] _country
+			bytes32[2] memory _id,
+			address[2] memory _addr,
+			uint8[2] memory _rating,
+			uint16[2] memory _country
 		)
 	{
-		require (_value > 0, "Cannot send 0 tokens");
+		require(_value > 0, "Cannot send 0 tokens");
 		(
 			_authId,
 			_id,
@@ -158,16 +158,16 @@ contract SecurityToken is STBase {
 	}
 
 	function _checkTransfer(
-		address[2] _addr,
+		address[2] memory _addr,
 		bytes32 _authId,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] memory _id,
+		uint8[2] memory _rating,
+		uint16[2] memory _country,
 		uint256 _value
 	)
 		internal
 		view
-		returns (address[2])
+		returns (address[2] memory)
 	{
 		if (_id[0] == ownerID) {
 			_addr[0] = address(issuer);
@@ -175,9 +175,9 @@ contract SecurityToken is STBase {
 		if (_id[1] == ownerID) {
 			_addr[1] = address(issuer);
 		}
-		require (balances[_addr[0]] >= _value, "Insufficient Balance");
+		require(balances[_addr[0]] >= _value, "Insufficient Balance");
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].checkTransfer) {
+			if (address(modules[i].module) != address(0) && modules[i].checkTransfer) {
 				require(
 					ISTModule(modules[i].module).checkTransfer(
 						_addr,
@@ -200,8 +200,8 @@ contract SecurityToken is STBase {
 	/// @param _value Amount approved for transfer
 	/// @return boolean
 	function approve(address _spender, uint256 _value) external returns (bool) {
-		require (_spender != address(this));
-		require (_value == 0 || allowed[msg.sender][_spender] == 0);
+		require(_spender != address(this));
+		require(_value == 0 || allowed[msg.sender][_spender] == 0);
 		allowed[msg.sender][_spender] = _value;
 		emit Approval(msg.sender, _spender, _value);
 		return true;
@@ -237,8 +237,9 @@ contract SecurityToken is STBase {
 		returns (bool)
 	{
 		/* If called by a module, the authority becomes the issuing contract. */
+		address _auth;
 		if (isActiveModule(msg.sender)) {
-			address _auth = address(issuer);
+			_auth = address(issuer);
 		} else {
 			_auth = msg.sender;
 		}
@@ -268,20 +269,20 @@ contract SecurityToken is STBase {
 	/// @param _country Array of sender/receiver countries
 	/// @param _value Amount to transfer
 	function _transfer(
-		address[2] _addr,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,		
+		address[2] memory _addr,
+		bytes32[2] memory _id,
+		uint8[2] memory _rating,
+		uint16[2] memory _country,		
 		uint256 _value
 	)
 		internal
 	{
 		balances[_addr[0]] = balances[_addr[0]].sub(_value);
 		balances[_addr[1]] = balances[_addr[1]].add(_value);
-		require (issuer.transferTokens(_id, _rating, _country, _value));
+		require(issuer.transferTokens(_id, _rating, _country, _value));
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].transferTokens) {
-				require (
+			if (address(modules[i].module) != address(0) && modules[i].transferTokens) {
+				require(
 					ISTModule(modules[i].module).transferTokens(
 						_addr,
 						_id,
@@ -308,7 +309,7 @@ contract SecurityToken is STBase {
 		external
 		returns (bool)
 	{
-		require (isActiveModule(msg.sender));
+		require(isActiveModule(msg.sender));
 		if (balances[_owner] == _value) return true;
 		if (balances[_owner] > _value) {
 			totalSupply = totalSupply.sub(balances[_owner].sub(_value));
@@ -323,8 +324,8 @@ contract SecurityToken is STBase {
 			uint16 _country
 		) = issuer.balanceChanged(_owner, _old, _value);
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (address(modules[i].module) != 0 && modules[i].balanceChanged) {
-				require (
+			if (address(modules[i].module) != address(0) && modules[i].balanceChanged) {
+				require(
 					ISTModule(modules[i].module).balanceChanged(
 						_owner,
 						_id,

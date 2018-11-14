@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./KYCRegistrar.sol";
 import "./interfaces/STModule.sol";
@@ -22,7 +22,7 @@ contract STBase {
 	event ModuleDetached(address module);
 
 	/// @notice Fallback function
-	function () public payable {
+	function () external {
 		revert();
 	}
 
@@ -30,13 +30,13 @@ contract STBase {
 	/// @param _module Address of the deployed module
 	/// @return boolean
 	function _attachModule(address _module) internal {
-		require (!activeModules[_module]);
+		require(!activeModules[_module]);
 		IBaseModule b = IBaseModule(_module);
-		require (b.owner() == address(this));
+		require(b.owner() == address(this));
 		(bool _check, bool _transfer, bool _balance) = b.getBindings();
 		activeModules[_module] = true;
 		for (uint256 i = 0; i < modules.length; i++) {
-			if (modules[i].module == 0) {
+			if (modules[i].module == address(0)) {
 				modules[i] = Module(_module, _check, _transfer, _balance);
 				emit ModuleAttached(_module, _check, _transfer, _balance);
 				return;
@@ -52,7 +52,7 @@ contract STBase {
 	function _detachModule(address _module) internal {
 		for (uint256 i = 0; i < modules.length; i++) {
 			if (modules[i].module == _module) {
-				modules[i].module = 0;
+				modules[i].module = address(0);
 				activeModules[_module] = false;
 				emit ModuleDetached(_module);
 				return;

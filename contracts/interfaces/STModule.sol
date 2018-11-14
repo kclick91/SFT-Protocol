@@ -1,29 +1,29 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 
 interface IBaseModule {
 	function getBindings() external view returns (bool, bool, bool);
 	function owner() external view returns (address);
-	function name() external view returns (string);
+	function name() external view returns (string memory);
 }
 
 interface ISTModule {
 	function checkTransfer(
-		address[2] _addr,
+		address[2] calldata _addr,
 		bytes32 _authId,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] calldata _id,
+		uint8[2] calldata _rating,
+		uint16[2] calldata _country,
 		uint256 _value
 	)
 		external
 		view
 		returns (bool);
 	function transferTokens(
-		address[2] _addr,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		address[2] calldata _addr,
+		bytes32[2] calldata _id,
+		uint8[2] calldata _rating,
+		uint16[2] calldata _country,
 		uint256 _value
 	)
 		external
@@ -51,9 +51,9 @@ interface IIssuerModule {
 	function checkTransfer(
 		address _token,
 		bytes32 _authId,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] calldata _id,
+		uint8[2] calldata _rating,
+		uint16[2] calldata _country,
 		uint256 _value
 	)
 		external
@@ -61,9 +61,9 @@ interface IIssuerModule {
 		returns (bool);
 	function transferTokens(
 		address _token,
-		bytes32[2] _id,
-		uint8[2] _rating,
-		uint16[2] _country,
+		bytes32[2] calldata _id,
+		uint8[2] calldata _rating,
+		uint16[2] calldata _country,
 		uint256 _value
 	)
 		external

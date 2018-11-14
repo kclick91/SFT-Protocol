@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "../SecurityToken.sol";
 import "../IssuingEntity.sol";
@@ -10,12 +10,12 @@ contract STModuleBase {
 	SecurityToken public token;
 
 	modifier onlyParent() {
-		require (msg.sender == address(token) || msg.sender == address(issuer));
+		require(msg.sender == address(token) || msg.sender == address(issuer));
 		_;
 	}
 
 	modifier onlyIssuer () {
-		require (issuer.isApprovedAuthority(msg.sender, msg.sig));
+		require(issuer.isApprovedAuthority(msg.sender, msg.sig));
 		_;
 	}
 
@@ -37,16 +37,16 @@ contract IssuerModuleBase {
 	IssuingEntity public issuer;
 
 	modifier onlyParent() {
-		require (msg.sender == address(issuer));
+		require(msg.sender == address(issuer));
 		_;
 	}
 
 	modifier onlyIssuer () {
-		require (issuer.isApprovedAuthority(msg.sender, msg.sig));
+		require(issuer.isApprovedAuthority(msg.sender, msg.sig));
 		_;
 	}
 
-	constructor(address _issuer) public {
+	constructor(address payable _issuer) public {
 		issuer = IssuingEntity(_issuer);
 		ownerID = issuer.ownerID();
 	}

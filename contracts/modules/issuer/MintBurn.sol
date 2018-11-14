@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >0.4.99 <0.6.0;
 
 import "../../open-zeppelin/SafeMath.sol";
 import "../ModuleBase.sol";
@@ -14,13 +14,13 @@ contract MintBurnModule is IssuerModuleBase {
 	event TokensMinted(address indexed token, uint256 amount);
 	event TokensBurned(address indexed token, uint256 amount);
 
-	constructor(address _issuer) IssuerModuleBase(_issuer) public { }
+	constructor(address payable _issuer) IssuerModuleBase(_issuer) public { }
 
 	function getBindings() external pure returns (bool, bool, bool) {
 		return (false, false, false);
 	}
 
-	function mint(address _token, uint256 _value) external onlyIssuer returns (bool) {
+	function mint(address payable _token, uint256 _value) external onlyIssuer returns (bool) {
 		SecurityToken t = SecurityToken(_token);
 		uint256 _new = t.balanceOf(address(issuer)).add(_value);
 		require(t.modifyBalance(address(issuer), _new));
@@ -28,7 +28,7 @@ contract MintBurnModule is IssuerModuleBase {
 		return true;
 	}
 
-	function burn(address _token, uint256 _value) external onlyIssuer returns (bool) {
+	function burn(address payable _token, uint256 _value) external onlyIssuer returns (bool) {
 		SecurityToken t = SecurityToken(_token);
 		uint256 _new = t.balanceOf(address(issuer)).sub(_value);
 		require(t.modifyBalance(address(issuer), _new));
