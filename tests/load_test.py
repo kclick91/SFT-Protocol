@@ -12,8 +12,9 @@ RATINGS = 3
 
 investors = [] # {'id':None, 'country':0, 'rating':0, 'accounts':[], 'kyc':[]}
 
+
 def create_ecosystem():
-    
+
     """Create a diverse ecosystem"""
 
     global a
@@ -41,7 +42,7 @@ def create_ecosystem():
             KYCRegistrar[-1].addInvestor(inv['id'], inv['country'], '0x00',
                                 inv['rating'], 9999999999, inv['accounts'])
             inv['kyc'].add(i)
-    
+
     # deploy IssuingEntity and SecurityToken contracts,
     # associate tokens and registries
     for i in range(ISSUERS):
@@ -112,6 +113,7 @@ def _is_allowed(issuer, investor):
     if not issuer.kyc.intersection(investor['kyc']):
         return "No KYC"
     return True
+
 
 def _investor_balance(issuer, investor):
     total = 0

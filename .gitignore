@@ -1,7 +1,9 @@
 deployments/__pycache__/
 tests/__pycache__/
 environments/
+venv/
 .vscode
+.idea
 docs/_build/
 docs/_templates/
 docs/_static/

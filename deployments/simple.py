@@ -2,6 +2,7 @@
 
 import itertools
 
+
 def deploy():
     kyc = accounts[0].deploy(KYCRegistrar, [accounts[0]], 0)
     issuer = accounts[1].deploy(IssuingEntity, [accounts[1]], 1)

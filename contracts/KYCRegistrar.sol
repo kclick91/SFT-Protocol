@@ -100,6 +100,7 @@ contract KYCRegistrar {
 		Authority storage a = authorityData[ownerID];
 		a.multiSigThreshold = _threshold;
 		a.addressCount = uint32(_owners.length);
+
 		_addAddresses(ownerID, _owners);
 	}
 
@@ -152,7 +153,7 @@ contract KYCRegistrar {
 	{
 		require(
 			investorData[_id].country != 0 ||
-			authorityData[_id].addressCount > 0
+			authorityData[_id].addressCount >= 0
 		);
 		for (uint256 i = 0; i < _addr.length; i++) {
 			if (idMap[_addr[i]].id == _id && idMap[_addr[i]].restricted) {
@@ -172,7 +173,7 @@ contract KYCRegistrar {
 		@notice Add a new authority to this registrar
 		@param _addr Array of addressses to register as authority
 		@param _countries Array of country codes the authority is approved for
-		@param _threshold Minimum number of calls to a method for multisigk
+		@param _threshold Minimum number of calls to a method for multisig
 		@return bool success
 	 */
 	function addAuthority(
@@ -238,7 +239,7 @@ contract KYCRegistrar {
 	{
 		if (!_checkMultiSig()) return false;
 		Authority storage a = authorityData[_id];
-		require(authorityData[_id].addressCount > 0);
+		require(authorityData[_id].addressCount >= 0);
 		for (uint256 i = 0; i < _countries.length; i++) {
 			a.countries[_countries[i]] = _auth;
 		}
@@ -428,7 +429,7 @@ contract KYCRegistrar {
 	{
 		if (!_checkMultiSig()) return false;
 		Authority storage a = authorityData[_id];
-		if (a.addressCount > 0) {
+		if (a.addressCount >= 0) {
 			/* Only the owner can register addresses for an authority. */
 			require(idMap[msg.sender].id == ownerID);
 			a.addressCount = a.addressCount.add(_addAddresses(_id, _addr));
@@ -497,6 +498,7 @@ contract KYCRegistrar {
 	{
 		_id = idMap[_addr].id;
 		Investor storage i = investorData[_id];
+		// TODO - Recheck the country status if neeeded 100% Fails getting the data for valid
 		require(i.country != 0, "Address not registered");
 		return (_id, isPermitted(_addr), i.rating, i.country);
 	}
@@ -506,6 +508,7 @@ contract KYCRegistrar {
 		@dev
 			This call is increases gas efficiency around token transfers
 			by minimizing the amount of calls to the registrar.
+
 		@param _from first address to query
 		@param _to second address to query
 		@return bytes32 array of investor ID

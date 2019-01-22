@@ -4,6 +4,7 @@ import time
 
 DEPLOYMENT = "simple"
 
+
 def create_custodians():
     '''Create custodians''' 
     global issuer, token, a, cust1, cust2
